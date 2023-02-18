@@ -82,4 +82,16 @@ contract Cryrdle {
     function getRewardPerWinner() public view returns (uint256) {
         return rewardPerWinner;
     }
+
+    function getHighScore() public view returns(uin256) {
+        return highscore;
+    }
+
+    function getPlayerDayPointBalance(playerAddress) public view returns(uint256) {
+        return dayPointBalance[playerAddress];
+    }
+
+    function getPlayerTotalPointBalance(playerAddress) public view returns(uint256) {
+        return totalPointBalances[playerAddress];
+    }
 }
