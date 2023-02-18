@@ -5,11 +5,11 @@ error lowScore(); //This means the score of the player is lower than the highsco
 error noPrizePool(); //This means that there is 0 eth in the prize pool.
 error notPaidFee(); //This means that the player has not paid the participation Fee.
 error notEqualFee(); //This means that the transaction is not equal the required fee.
+error noScore(); //This means that while there are participants no one has yet to finish the game.
 
 contract Cryrdle {
     address public gameAcc; //the treasury account address.
     uint256 public gameBal; //the balance stored on the treasury account. This should be a gnosis account?
-    uint256 public totalGuesses; //the total amount of guesses.
     address[] participants; //the participants who joined the guessing game.
     uint256 public participationFee; //participation that is set in the constructor
     mapping(address => uint256) totalPointBalances; // mapping that tracks the total point balance of all participants
@@ -50,17 +50,18 @@ contract Cryrdle {
                 revert lowScore();
             } else if (dayPointBalances[_participant] == highscore) {
                 winners.push(_participant);
+                rewardPerWinner = gameBal / winners.length;
             } else {
                 highscore = points;
                 winners = new address[](0);
                 winners.push(_participant);
+                rewardPerWinner = gameBal / winners.length;
             }
         }
     }
 
     function payWinner() public payable {
         if (msg.value > 0) {revert noPrizePool(); }
-        rewardPerWinner = gameBal / winners.length;
         for (uint256 i = 0; i < winners.length; i++) {
             payable(winners[i]).transfer(rewardPerWinner);
         }
@@ -74,6 +75,11 @@ contract Cryrdle {
     }
 
     function getWinners() public view returns (address[] memory) {
+        if(rewardPerWinner == 0) {revert noScore();}
         return winners;
+    }
+
+    function getRewardPerWinner() public view returns (uint256) {
+        return rewardPerWinner;
     }
 }
