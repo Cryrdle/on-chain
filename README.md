@@ -17,3 +17,7 @@ At current, I worked on the following function:
     - Create an makeGuess() function in the smart contract. This would add complexity.
 3. Write test and deploy scripts.
 4. Resarch Fathom Blockchain.
+5. where is the coin of the day being stored. 
+6. keeper, vrf, API
+7. Clarify what is the functionality of the smart contract and of the front-end/back-end.
+8. ether.js to hide the coin of the day (to avoid hacking of the hashing)
