@@ -11,10 +11,6 @@ At current, I worked on the following function:
 5. getWinners() --> Helper function to return the winners array.
 
 ### ToDos
-1. Fix the error in addPoints().
-2. Discuss how the game is being played. There are two options.
-    - Let the game be fully played out in the front-end and only store the points via addPoints()
-    - Create an makeGuess() function in the smart contract. This would add complexity.
 3. Write test and deploy scripts.
 4. Resarch Fathom Blockchain.
 5. where is the coin of the day being stored. 

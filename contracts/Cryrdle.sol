@@ -22,7 +22,6 @@ contract Cryrdle {
     constructor() {
         gameAcc = msg.sender;
         gameBal = 0;
-        totalGuesses = 0;
         participationFee = 0.0001 ether;
     }
 
@@ -83,15 +82,15 @@ contract Cryrdle {
         return rewardPerWinner;
     }
 
-    function getHighScore() public view returns(uin256) {
+    function getHighScore() public view returns(uint256) {
         return highscore;
     }
 
-    function getPlayerDayPointBalance(playerAddress) public view returns(uint256) {
-        return dayPointBalance[playerAddress];
+    function getPlayerDayPointBalance(address playerAddress) public view returns(uint256) {
+        return dayPointBalances[playerAddress];
     }
 
-    function getPlayerTotalPointBalance(playerAddress) public view returns(uint256) {
+    function getPlayerTotalPointBalance(address playerAddress) public view returns(uint256) {
         return totalPointBalances[playerAddress];
     }
 }
