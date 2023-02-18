@@ -23,17 +23,34 @@ contract Cryrdle is VRFConsumerBaseV2 {
     address[] winners;
     uint256 coinOfTheDay; //random index between 1-100 that determines the coin of the day
 
+    /* VRF specific variables */
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
+    bytes32 private immutable i_gasLane;
+    uint64 private immutable i_subscriptionId;
+    uint32 private immutable i_callbackGasLimit;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+    uint32 private constant NUM_WORDS = 1;
 
     /* Events */
     event CryrdleJoined(address indexed participant); //event to emit upon a person joined crydle
-
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     /* Mappings */
     mapping(address => uint256) totalPointBalances; // mapping that tracks the total point balance of all participants
     mapping(address => uint256) dayPointBalances; // mapping that tracks the daily point balance of all participants
     mapping(address => bool) paidParticipationFee; //mapping that holds accounts of who paid
 
-    constructor(uint256 participationFee, address vrfCoordinatorV2) VRFConsumerBaseV2(vrfCoordinatorV2) {
+    constructor(
+        uint256 participationFee,
+        address vrfCoordinatorV2,
+        bytes32 gasLane,
+        uint64 subscriptionId,
+        uint32 callbackGasLimit
+    ) VRFConsumerBaseV2(vrfCoordinatorV2) {
+        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
+        i_gasLane = gasLane;
+        i_subscriptionId = subscriptionId;
+        i_callbackGasLimit = callbackGasLimit;
         gameAcc = msg.sender;
         gameBal = 0;
         i_participationFee = participationFee;
@@ -51,12 +68,21 @@ contract Cryrdle is VRFConsumerBaseV2 {
         }
     }
 
-    function requestRandomCoin() external{
-
+    function requestRandomCoin() external {
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS}
+        emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-
+    function fulfillRandomWords(
+        uint256 requestId,
+        uint256[] memory randomWords
+    ) internal override {
+            
     }
 
     //the function below should only be allowed to executed by the owner
@@ -94,7 +120,6 @@ contract Cryrdle is VRFConsumerBaseV2 {
         winners = new address[](0);
         participants = new address[](0);
     }
-
 
     /* view functions */
     function getParticipants() public view returns (address[] memory) {
