@@ -17,3 +17,4 @@ At current, I worked on the following function:
 6. keeper, vrf, API
 7. Clarify what is the functionality of the smart contract and of the front-end/back-end.
 8. ether.js to hide the coin of the day (to avoid hacking of the hashing)
+9. record previous random numbers
