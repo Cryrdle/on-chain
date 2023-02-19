@@ -4,17 +4,12 @@
 ### Achievements
 At current, I worked on the following function: 
 1. joinCryrdle() --> Join the Game by paying the participation fee and adding the address to the participants array.
-2. addPoints() --> A function that allows us to give points to participants based on their correct guesses. At the same time it also updates the winner array. There is still an error here.
-2. payWinner() --> This function pays out every address that has the highest highscore.
-3. checkParticipant() --> Helper function for addPoints() to check if the address is in the participation array.
-4. getParticipants() --> Helper function to return the participants array.
-5. getWinners() --> Helper function to return the winners array.
+1. addPoints() --> A function that allows us to give points to participants based on their correct guesses. At the same time it also updates the winner array.
+1. checkUpkeep() --> This function makes sure that the game is restarted every 24 hours.
+1. performUpkeep() --> This function initiates the fulfillRandomWords function when upkeep needed.
+1. fulfillRandomWords() --> provide a .This function (1)pays out every address that has the highest highscore, (2) updates the coin of the day via a random number between 1-100, and (3) restarts the game by reinitiating the game state.
+1. And a bunch of helper functions!
 
 ### ToDos
-3. Write test and deploy scripts.
-4. Resarch Fathom Blockchain.
-5. where is the coin of the day being stored. 
-6. keeper, vrf, API
-7. Clarify what is the functionality of the smart contract and of the front-end/back-end.
-8. ether.js to hide the coin of the day (to avoid hacking of the hashing)
-9. record previous random numbers
+1. Write test and deploy scripts.
+1. Resarch Fathom Blockchain.
