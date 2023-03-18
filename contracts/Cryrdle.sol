@@ -254,8 +254,13 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     }
 
     //add a AM I a winer function
-    function getWinnerBinary() public view returns(bool){
-        
+    function getCheckWinner(address playerAddress) public view returns (bool) {
+    for (uint i = 0; i < winners.length; i++) {
+        if (winners[i] == playerAddress) {
+            return true;
+        }
+    }
+    return false;
     }
 
 }
