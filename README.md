@@ -13,3 +13,7 @@ At current, I worked on the following function:
 ### ToDos
 1. Write test and deploy scripts.
 1. Resarch Fathom Blockchain.
+
+
+Current Contract Address
+0xC8516d2A5E056936C8CB7A3C18E03E051E54C610
