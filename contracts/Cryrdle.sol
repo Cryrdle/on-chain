@@ -6,6 +6,7 @@ error notEqualFee(); //This means that the transaction is not equal the required
 error noScore(); //This means that while there are participants no one has yet to finish the game.
 error cryrdleNotOpen(); //This means that the keeper is currently running to update the daily coinOfTheDay and pay the winners.
 error UpkeepNotNeeded(uint256 cryrdleState); //This means that the upkeep is not needed since the checkUpkeep returns False
+error AlreadyParticipatedToday(); //This means that the player has already joinedCryrdle once today.
 
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
@@ -59,9 +60,9 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
 
     /* Mappings */
-    mapping(address => uint256) totalPointBalances; // mapping that tracks the total point balance of all participants
-    mapping(address => uint256) dayPointBalances; // mapping that tracks the daily point balance of all participants
-    mapping(address => bool) paidParticipationFee; //mapping that holds accounts of who paid
+    mapping(address => uint256) public totalPointBalances; // mapping that tracks the total point balance of all participants
+    mapping(address => uint256) public dayPointBalances; // mapping that tracks the daily point balance of all participants
+    mapping(address => bool) public paidParticipationFee; //mapping that holds accounts of who paid
 
     /* Functions */
     constructor(
@@ -87,10 +88,15 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     /* Cryrdle.STATE is open and the game is ongoing */
     function joinCryrdle() public payable {
+        //check if the game state is open     
         if(s_cryrdleState != CryrdleState.OPEN) {
             revert cryrdleNotOpen();
         }
-        //require wallet addrress ! in participation array.
+        //check if the player has already joined once or not
+        if(paidParticipationFee[msg.sender] = true) {
+            revert AlreadyParticipatedToday();
+        }
+
         if (msg.value != i_participationFee) {
             revert notEqualFee();
         } else {
@@ -126,8 +132,6 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
             }
         }
     }
-
-
 
     function checkUpkeep(
         bytes memory /* checkData */
@@ -194,6 +198,7 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         participants = new address[](0);
         s_lastTimeStamp = block.timestamp;
         s_cryrdleState = CryrdleState.OPEN;
+        //how the fuck do I restart the hasParticipated & dailypointbalance mapping???
         emit GameStateReinitiated();
     }
 
