@@ -32,7 +32,7 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     uint256 public coinOfTheDay; //random index between 1-100 that determines the coin of the day
     uint256[] coinHistory; //array that records the random numbers generated
     CryrdleState private s_cryrdleState; //stores the state of the game in a variable
-    
+    uint256 public currentGameId;
     
     /* Chainlink Keeper specific variables */
     uint256 private s_lastTimeStamp;
@@ -61,8 +61,11 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     /* Mappings */
     mapping(address => uint256) public totalPointBalances; // mapping that tracks the total point balance of all participants
-    mapping(address => uint256) public dayPointBalances; // mapping that tracks the daily point balance of all participants
-    mapping(address => bool) public paidParticipationFee; //mapping that holds accounts of who paid
+    //mapping(address => uint256) public dayPointBalances; 
+    //mapping(address => bool) public paidParticipationFee; 
+    mapping(uint256 => mapping(address => uint256)) public dayPointBalances; // mapping that tracks the daily point balance of all participants
+    mapping(uint256 => mapping(address => bool)) public paidParticipationFee; //mapping that holds accounts of who paid
+
 
     /* Functions */
     constructor(
@@ -88,49 +91,45 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     /* Cryrdle.STATE is open and the game is ongoing */
     function joinCryrdle() public payable {
-        //check if the game state is open     
-        if(s_cryrdleState != CryrdleState.OPEN) {
-            revert cryrdleNotOpen();
-        }
-        //check if the player has already joined once or not
-        if(paidParticipationFee[msg.sender] = true) {
-            revert AlreadyParticipatedToday();
-        }
-
-        if (msg.value != i_participationFee) {
-            revert notEqualFee();
-        } else {
-            participants.push(msg.sender);
-            gameBal += msg.value;
-            paidParticipationFee[msg.sender] = true;
-            emit CryrdleJoined(msg.sender);
-        }
+    //check if the game state is open 
+    if(s_cryrdleState != CryrdleState.OPEN) {
+        revert cryrdleNotOpen();
+    }
+    //check if the player has already joined once or not
+    if(paidParticipationFee[currentGameId][msg.sender]) {
+        revert AlreadyParticipatedToday();
+    }
+    if (msg.value != i_participationFee) {
+        revert notEqualFee();
+    } else {
+        participants.push(msg.sender);
+        gameBal += msg.value;
+        paidParticipationFee[currentGameId][msg.sender] = true;
+        emit CryrdleJoined(msg.sender);
+    }
     }
 
-
-    //rename function to submit
     function addPoints(address _participant, uint256 points) public {
-        if (paidParticipationFee[_participant] != true) {
-            revert notPaidFee();
+    if (!paidParticipationFee[currentGameId][_participant]) {
+        revert notPaidFee();
+    } else {
+        dayPointBalances[currentGameId][_participant] += points;
+        totalPointBalances[_participant] += points;
+        
+        if (dayPointBalances[currentGameId][_participant] == highscore) {
+            winners.push(_participant);
+            rewardPerWinner = (gameBal * 95) / (winners.length * 100); // reserving 5% for gas fees
+            emit WinnerNotification(_participant);
+        } else if (dayPointBalances[currentGameId][_participant] > highscore) {
+            highscore = points;
+            winners = new address[](0);
+            winners.push(_participant);
+            rewardPerWinner = (gameBal * 95) / (winners.length * 100); // reserving 5% for gas fees
+            emit WinnerNotification(_participant);
         } else {
-            // update point balances
-            dayPointBalances[_participant] += points;
-            totalPointBalances[_participant] += points;
-            //update winner object array
-            if (dayPointBalances[_participant] == highscore) {
-                winners.push(_participant);
-                rewardPerWinner = gameBal / winners.length;
-                emit WinnerNotification(_participant);
-            } else if (dayPointBalances[_participant] > highscore) {
-                highscore = points;
-                winners = new address[](0);
-                winners.push(_participant);
-                rewardPerWinner = gameBal / winners.length;
-                emit WinnerNotification(_participant);
-            } else {
-                emit LooserNotification(_participant);
-            }
+            emit LooserNotification(_participant);
         }
+    }
     }
 
     function checkUpkeep(
@@ -191,15 +190,15 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     }
 
     function reinitiateGameState() public {
-        /* initiate to original game state*/
-        gameBal = 0;
-        rewardPerWinner = 0;
-        winners = new address[](0);
-        participants = new address[](0);
-        s_lastTimeStamp = block.timestamp;
-        s_cryrdleState = CryrdleState.OPEN;
-        //how the fuck do I restart the hasParticipated & dailypointbalance mapping???
-        emit GameStateReinitiated();
+    /* initiate to original game state*/
+    currentGameId += 1;
+    gameBal = address(this).balance;
+    rewardPerWinner = 0;
+    winners = new address[](0);
+    participants = new address[](0);
+    s_lastTimeStamp = block.timestamp;
+    s_cryrdleState = CryrdleState.OPEN;
+    emit GameStateReinitiated();
     }
 
     /* view functions */
@@ -231,7 +230,7 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     }
 
     function getPlayerDayPointBalance(address playerAddress) public view returns (uint256) {
-        return dayPointBalances[playerAddress];
+        return dayPointBalances[currentGameId][playerAddress];
     }
 
     function getPlayerTotalPointBalance(address playerAddress) public view returns (uint256) {
