@@ -33,6 +33,9 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     uint256[] coinHistory; //array that records the random numbers generated
     CryrdleState private s_cryrdleState; //stores the state of the game in a variable
     uint256 public currentGameId;
+    address private adminWalletJK; //admin wallet for admin fee
+    address private adminWalletJS; //admin wallet for admin fee
+
     
     /* Chainlink Keeper specific variables */
     uint256 private s_lastTimeStamp;
@@ -61,8 +64,6 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     /* Mappings */
     mapping(address => uint256) public totalPointBalances; // mapping that tracks the total point balance of all participants
-    //mapping(address => uint256) public dayPointBalances; 
-    //mapping(address => bool) public paidParticipationFee; 
     mapping(uint256 => mapping(address => uint256)) public dayPointBalances; // mapping that tracks the daily point balance of all participants
     mapping(uint256 => mapping(address => bool)) public paidParticipationFee; //mapping that holds accounts of who paid
 
@@ -74,7 +75,9 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         bytes32 gasLane,
         uint256 interval,
         uint256 participationFee,
-        uint32 callbackGasLimit
+        uint32 callbackGasLimit,
+        address _adminWalletJK,
+        address _adminWalletJS
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         i_gasLane = gasLane;
@@ -86,6 +89,8 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         i_callbackGasLimit = callbackGasLimit;
         gameAcc = msg.sender;
         gameBal = 0;
+        adminWalletJK = _adminWalletJK;
+        adminWalletJS = _adminWalletJS;
     }
 
 
@@ -118,13 +123,13 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         
         if (dayPointBalances[currentGameId][_participant] == highscore) {
             winners.push(_participant);
-            rewardPerWinner = (gameBal * 95) / (winners.length * 100); // reserving 5% for gas fees
+            rewardPerWinner = (gameBal * 95) / (winners.length * 100); // reserving 2% for gas fees & 3% for admin fee
             emit WinnerNotification(_participant);
         } else if (dayPointBalances[currentGameId][_participant] > highscore) {
             highscore = points;
             winners = new address[](0);
             winners.push(_participant);
-            rewardPerWinner = (gameBal * 95) / (winners.length * 100); // reserving 5% for gas fees
+            rewardPerWinner = (gameBal * 95) / (winners.length * 100); // reserving 2% for gas fees & 3% for admin fee
             emit WinnerNotification(_participant);
         } else {
             emit LooserNotification(_participant);
@@ -179,17 +184,24 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         coinHistory.push(coinOfTheDay);
         emit CoinOfTheDayUpdated(coinOfTheDay);
 
-        if (gameBal > 0) {
-            reinitiateGameState();
+        if (gameBal == 0) {
+            //no one is paid out since no one joined the game.
         } else {
         for (uint256 i = 0; i < winners.length; i++) {
             payable(winners[i]).transfer(rewardPerWinner);
-            reinitiateGameState();
             emit WinnersPayedOut(winners);}
         }
+        reinitiateGameState();
     }
 
     function reinitiateGameState() public {
+    // Distribute admin fee
+    uint256 adminFee = (gameBal * 3) / 100;
+    uint256 adminFeePerWallet = adminFee / 2;
+    payable(adminWalletJK).transfer(adminFeePerWallet);
+    payable(adminWalletJS).transfer(adminFeePerWallet);
+    
+    
     /* initiate to original game state*/
     currentGameId += 1;
     gameBal = address(this).balance;
@@ -199,6 +211,10 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     s_lastTimeStamp = block.timestamp;
     s_cryrdleState = CryrdleState.OPEN;
     emit GameStateReinitiated();
+    }
+
+    //Receive function to deposit ETH to pay for gas fees.
+    receive() external payable {
     }
 
     /* view functions */
@@ -257,7 +273,7 @@ contract Cryrdle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         return i_interval;
     }
 
-    //add a AM I a winer function
+    //add a AM I a winner function
     function getCheckWinner(address playerAddress) public view returns (bool) {
     for (uint i = 0; i < winners.length; i++) {
         if (winners[i] == playerAddress) {
