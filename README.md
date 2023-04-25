@@ -16,4 +16,14 @@ At current, I worked on the following function:
 
 
 Current Contract Address
-0xC8516d2A5E056936C8CB7A3C18E03E051E54C610
+0x7ac4220a71517172Ae38a25d00Aad2d22E1E3A21
+
+Constructor Input Parameters
+address vrfCoordinatorV2 = "0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625";
+uint64 subscriptionId = "1479";
+bytes32 gasLane = "0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c";
+uint256 interval = "86400";
+uint256 participationFee = "1000000000000000";
+uint32 callbackGasLimit = "500000";
+address _adminWalletJK = "XX";
+address _adminWalletJS = "XX";
